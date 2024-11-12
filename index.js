@@ -55,10 +55,10 @@ app.use(cors({
 app.use(express.json());
 
 
-// Ruta principal de prueba
+//Ruta conexion con vercel.
 app.get("/", (req, res) => res.send("Express en Vercel"));
 
-// Ruta para enviar mensaje
+//Ruta para enviar mensaje
 app.post('/api/contact', async (req, res) => {
     const { name, email, message } = req.body;
     try {
