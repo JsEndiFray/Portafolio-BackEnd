@@ -3,10 +3,10 @@ const cors = require('cors');
 const dotenv = require('dotenv').config();
 
 
-const dbConnection = require('./src/dbConnection/dbConnection')
+const dbConnection = require('./src/dbConnection/dbConnection');
 const app = express();
 
-const port = process.env.PORT;
+const port = process.env.PORT || 5001;
 
 // Acceso a log
 // const logStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {
@@ -43,34 +43,43 @@ const port = process.env.PORT;
 //
 //     next();
 // })
+//Integrar Sentry para Monitoreo de Errores
 
 
-//Middleware
-app.use(cors({ //los metodos puestos es para poder hacer pruebas en locales. luego se borran
-    origin: '*',
-    method: ['GET', 'POST', 'PUT', 'DELETE'],
+// Middleware
+app.use(cors({
+    origin: 'https://endifray.vercel.app/dashboard',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['content-type', 'Authorization']
 }));
 app.use(express.json());
 
-//Routes
-app.get("/", (req, res)=>res.send("Express en vercel"))
 
-// enviar mensaje
-app.post('/api/contact', (req, res) => {
-    const {name, email, message} = req.body;
-    dbConnection.createContact({name, email, message});
-    res.status(200).json({msg: 'Mensaje enviado correctamente'})
-})
+// Ruta principal de prueba
+app.get("/", (req, res) => res.send("Express en Vercel"));
 
-// ver los mensaje
+// Ruta para enviar mensaje
+app.post('/api/contact', async (req, res) => {
+    const { name, email, message } = req.body;
+    try {
+        await dbConnection.createContact({ name, email, message });
+        res.status(200).json({ msg: 'Mensaje enviado correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al enviar el mensaje' });
+    }
+});
+
+// Ruta para obtener mensajes
 app.get('/api/contact', async (req, res) => {
-    const listContact = await dbConnection.getContact(); // Asegúrate de que sea una función asíncrona
-    return res.json({listContact})
-
+    try {
+        const listContact = await dbConnection.getContact();
+        res.json({ listContact });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener los mensajes' });
+    }
 });
 
 
 app.listen(port, () => {
-    console.log('Conexion exitosa al puerto:', port);
-})
+    console.log('Servidor conectado en el puerto:', port);
+});
