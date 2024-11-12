@@ -13,9 +13,17 @@ const transporter = nodemailer.createTransport({
 const sendEmailNotification = (contact) => {
     const mailOptions = {
         from: process.env.EMAIL_USER,
-        to: 'endifraymv@gmail.com',
-        subject: 'Tienes un nuevo mensaje',
-        text: `Has recibido un nuevo mensaje de ${contact.name}. email: ${contact.email}. Mensaje: ${contact.message}`,
+        to: process.env.EMAIL_USER,
+        subject: `Nuevo mensaje de ${contact.name}`,
+        text:
+            `Has recibido un nuevo mensaje. 
+             De: ${contact.name} 
+            Email: ${contact.email}
+            Mensaje: ${contact.message}
+            
+            -------------------------
+            Este mensaje fue enviado desde el formulario de contacto de tu página web.`
+
     };
     return transporter.sendMail(mailOptions);
 }
