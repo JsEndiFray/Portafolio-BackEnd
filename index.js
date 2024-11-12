@@ -48,7 +48,7 @@ const port = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors({
-    origin: 'https://endifray.vercel.app/dashboard',
+    origin: 'https://endifray.vercel.app/contact',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['content-type', 'Authorization']
 }));
