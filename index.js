@@ -66,7 +66,7 @@ app.post('/api/contact', (req, res) => {
     dbConnection.createContact({name, email, message})
         .then(() => {
             //me reenvio el mensaje a mi correo
-            sendEmailNotification({name, email, message});
+            return sendEmailNotification({name, email, message});
         })
         .then(() => {
             res.status(200).json({msg: 'Mensaje enviado correctamente'});
