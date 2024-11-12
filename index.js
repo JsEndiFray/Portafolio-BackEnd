@@ -4,8 +4,9 @@ const dotenv = require('dotenv').config();
 
 
 const dbConnection = require('./src/dbConnection/dbConnection');
-const app = express();
+const sendEmailNotification = require('./src/services/emailServices')
 
+const app = express();
 const port = process.env.PORT || 5001;
 
 // Acceso a log
@@ -59,24 +60,32 @@ app.use(express.json());
 app.get("/", (req, res) => res.send("Express en Vercel"));
 
 //Ruta para enviar mensaje
-app.post('/api/contact', async (req, res) => {
-    const { name, email, message } = req.body;
-    try {
-        await dbConnection.createContact({ name, email, message });
-        res.status(200).json({ msg: 'Mensaje enviado correctamente' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al enviar el mensaje' });
-    }
+app.post('/api/contact', (req, res) => {
+    const {name, email, message} = req.body;
+    //guardo los mensajes en la base de datos.
+    dbConnection.createContact({name, email, message})
+        .then(() => {
+            //me reenvio el mensaje a mi correo
+            sendEmailNotification({name, email, message});
+        })
+        .then(() => {
+            res.status(200).json({msg: 'Mensaje enviado correctamente'});
+        })
+        .catch(error => {
+            console.error("Error al enviar el mensaje:", error);
+            res.status(500).json({error: 'Error al enviar el mensaje'});
+        })
 });
 
 // Ruta para obtener mensajes
-app.get('/api/contact', async (req, res) => {
-    try {
-        const listContact = await dbConnection.getContact();
-        res.json({ listContact });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener los mensajes' });
-    }
+app.get('/api/contact', (req, res) => {
+    dbConnection.getContact()
+        .then(contact => {
+            res.status(200).json(contact);
+        }).catch(error => {
+        console.error("Error al obtener los contactos:", error);
+        res.status(500).json({error: 'Error al obtener los contactos'});
+    })
 });
 
 
