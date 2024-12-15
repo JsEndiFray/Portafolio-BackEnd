@@ -1,3 +1,8 @@
 node_modules/
 .env/
 .gitignore/
+.DS_Store
+.env
+.idea/back-EndiFray.iml
+.idea/modules.xml
+.src/.DS_Store
