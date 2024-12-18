@@ -54,6 +54,7 @@ app.use(cors({
     allowedHeaders: ['content-type', 'Authorization'],
     credentials: true
 }));
+app.options('*', cors());
 app.use(express.json());
 
 

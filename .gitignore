@@ -6,3 +6,4 @@ node_modules/
 .idea/back-EndiFray.iml
 .idea/modules.xml
 .src/.DS_Store
+.vercel
