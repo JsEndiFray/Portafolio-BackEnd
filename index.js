@@ -49,9 +49,10 @@ const port = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors({
-    origin: ['https://efmv.es', 'https://api.efmv.es'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['content-type', 'Authorization']
+    origin: ['https://efmv.es', 'https://api.efmv.es', 'http://localhost:4200'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE','OPTIONS'],
+    allowedHeaders: ['content-type', 'Authorization'],
+    credentials: true
 }));
 app.use(express.json());
 
