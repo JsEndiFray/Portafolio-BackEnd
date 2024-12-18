@@ -49,7 +49,7 @@ const port = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors({
-    origin: 'https://endifray.vercel.app',
+    origin: ['https://efmv.es', 'https://api.efmv.es'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['content-type', 'Authorization']
 }));
