@@ -64,6 +64,10 @@ app.use((req, res, next) => {
     console.log('Body:', req.body);
     next();
 });
+app.use((req, res, next) => {
+    console.log(`Solicitud: ${req.method} ${req.url}`);
+    next();
+});
 app.options('*', cors());
 app.use(express.json());
 
@@ -72,11 +76,6 @@ app.use(express.json());
 // Rutas de la API
 app.use('/api/contact', contactRouter);
 
-// Sirve contenido frontend (si es necesario)
-app.use(express.static(path.join(__dirname, 'frontend_build')));
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'frontend_build', 'index.html'));
-});
 
 
 //Ruta conexión con vercel.
