@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv').config();
 
+//pruebas
+const contactRouter = require('./src/contactRouter');
+const path = require('path');
 
 const dbConnection = require('./src/dbConnection/dbConnection');
 const sendEmailNotification = require('./src/services/emailServices')
@@ -54,30 +57,60 @@ app.use(cors({
     allowedHeaders: ['content-type', 'Authorization'],
     credentials: true
 }));
+//pruebas
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    next();
+});
 app.options('*', cors());
 app.use(express.json());
 
 
-//Ruta conexion con vercel.
+//pruebas
+// Rutas de la API
+app.use('/api/contact', contactRouter);
+
+// Sirve contenido frontend (si es necesario)
+app.use(express.static(path.join(__dirname, 'frontend_build')));
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend_build', 'index.html'));
+});
+
+
+//Ruta conexión con vercel.
 app.get("/", (req, res) => res.send("Express en Vercel"));
 
 //Ruta para enviar mensaje
-app.post('/api/contact', (req, res) => {
-    const {name, email, message} = req.body;
+/*app.post('/api/contact', (req, res) => {
+    /!*const {name, email, message} = req.body;
+    console.log('Solicitud recibida con los datos:', { name, email, message });
+
     //guardo los mensajes en la base de datos.
     dbConnection.createContact({name, email, message})
         .then(() => {
+            console.log('Datos guardados en la base de datos.');
             //me reenvio el mensaje a mi correo
             return sendEmailNotification({name, email, message});
         })
         .then(() => {
+            console.log('Correo enviado.');
+            console.error('Error al procesar la solicitud:', error);
             res.status(200).json({msg: 'Mensaje enviado correctamente'});
         })
         .catch(error => {
             console.error("Error al enviar el mensaje:", error);
             res.status(500).json({error: 'Error al enviar el mensaje'});
-        })
-});
+        })*!/
+});*/
+
+
+
+
+
+
+
 
 // Ruta para obtener mensajes
 app.get('/api/contact', (req, res) => {
