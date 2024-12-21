@@ -63,6 +63,7 @@ app.use(express.json());
 app.get("/", (req, res) => res.send("Express en Vercel"));
 
 //Ruta para enviar mensaje
+/*
 app.post('/api/contact', (req, res) => {
     const {name, email, message} = req.body;
 
@@ -88,6 +89,37 @@ app.post('/api/contact', (req, res) => {
             res.status(500).json({error: 'Error al enviar el mensaje'});
         })
 });
+*/
+
+app.post('/api/contact', async (req, res) => {
+    const { name, email, message } = req.body;
+
+    if (!name || !email || !message) {
+        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
+    console.log('Solicitud recibida:', { name, email, message });
+
+    try {
+        await dbConnection.createContact({ name, email, message });
+        res.status(200).json({ msg: 'Mensaje recibido y será procesado' });
+
+        // Enviar el correo en segundo plano
+        sendEmailNotification({ name, email, message })
+            .then(() => console.log('Correo enviado correctamente'))
+            .catch((err) => console.error('Error al enviar el correo:', err));
+    } catch (error) {
+        console.error('Error al guardar el contacto:', error);
+        res.status(500).json({ error: 'Error al procesar la solicitud' });
+    }
+});
+
+
+
+
+
+
+
 
 
 // Ruta para obtener mensajes
