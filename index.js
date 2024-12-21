@@ -65,6 +65,11 @@ app.get("/", (req, res) => res.send("Express en Vercel"));
 //Ruta para enviar mensaje
 app.post('/api/contact', (req, res) => {
     const {name, email, message} = req.body;
+
+    if (!name || !email || !message) {
+        console.error("Campos faltantes en la solicitud:", req.body);
+        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
     console.log('Solicitud recibida con los datos:', { name, email, message });
 
     //guardo los mensajes en la base de datos.
@@ -76,7 +81,6 @@ app.post('/api/contact', (req, res) => {
         })
         .then(() => {
             console.log('Correo enviado.');
-            console.error('Error al procesar la solicitud:', error);
             res.status(200).json({msg: 'Mensaje enviado correctamente'});
         })
         .catch(error => {
