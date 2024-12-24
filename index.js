@@ -97,9 +97,6 @@ app.post('/api/contact', async (req, res) => {
     if (!name || !email || !message) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
-
-    console.log('Solicitud recibida:', { name, email, message });
-
     try {
         await dbConnection.createContact({ name, email, message });
         res.status(200).json({ msg: 'Mensaje recibido y será procesado' });
