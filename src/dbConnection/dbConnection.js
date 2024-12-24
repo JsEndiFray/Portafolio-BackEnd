@@ -8,7 +8,7 @@ mongoose.connect(process.env.DB_CONNECTION)
     .then(connection=>{
         console.log('Conectado correctamente a MongoDB');
     }).catch(error =>{
-    console.log('Error de conexión:', error);
+    console.log('Error de conexión:', error.message);
 })
 
 //Funcion para crear un nuevo contacto
