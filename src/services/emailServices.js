@@ -3,7 +3,7 @@ const dotenv = require('dotenv').config();
 
 //configuracion del nodemailer
 const transporter = nodemailer.createTransport({
-    host: 'smtp.ionos.es',//este sera el proveedor
+    host: 'smtp.ionos.es',//este será el proveedor
     port: 465,
     secure: true,
     auth: {
