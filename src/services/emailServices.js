@@ -33,11 +33,10 @@ const sendEmailNotification = async (contact) => {
         return info;
 
     } catch (error) {
-        console.error('Error al enviar el correo:', error);
+        console.error('Error al enviar el correo:', error.message || error);
+        console.error('Detalles del error:', error.stack || 'Sin detalles');
         throw new Error('No se pudo enviar el correo');
     }
-
-   // return transporter.sendMail(mailOptions);
 }
 
 module.exports = sendEmailNotification;

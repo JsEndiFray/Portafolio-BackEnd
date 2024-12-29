@@ -65,7 +65,6 @@ app.get("/", (req, res) => res.send("Express en Vercel"));
 //Ruta para enviar mensaje
 app.post('/api/contact', async (req, res) => {
     const { name, email, message } = req.body;
-    console.log('Contacto guardado en la base de datos'); // prueba
     if (!name || !email || !message) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
@@ -80,7 +79,6 @@ app.post('/api/contact', async (req, res) => {
             })
             .catch((error) => console.error('Error al enviar el correo:', error));
     } catch (error) {
-        //console.error('Error al guardar el contacto:', error);
         res.status(500).json({ error: 'Error al procesar la solicitud' });
     }
 });
