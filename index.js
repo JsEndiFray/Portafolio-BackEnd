@@ -63,50 +63,24 @@ app.use(express.json());
 app.get("/", (req, res) => res.send("Express en Vercel"));
 
 //Ruta para enviar mensaje
-/*
-app.post('/api/contact', (req, res) => {
-    const {name, email, message} = req.body;
-
-    if (!name || !email || !message) {
-        console.error("Campos faltantes en la solicitud:", req.body);
-        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-    }
-    console.log('Solicitud recibida con los datos:', { name, email, message });
-
-    //guardo los mensajes en la base de datos.
-    dbConnection.createContact({name, email, message})
-        .then(() => {
-            console.log('Datos guardados en la base de datos.');
-            //me reenvio el mensaje a mi correo
-            return sendEmailNotification({name, email, message});
-        })
-        .then(() => {
-            console.log('Correo enviado.');
-            res.status(200).json({msg: 'Mensaje enviado correctamente'});
-        })
-        .catch(error => {
-            console.error("Error al enviar el mensaje:", error);
-            res.status(500).json({error: 'Error al enviar el mensaje'});
-        })
-});
-*/
-
 app.post('/api/contact', async (req, res) => {
     const { name, email, message } = req.body;
-
+    console.log('Contacto guardado en la base de datos'); // prueba
     if (!name || !email || !message) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
     try {
         await dbConnection.createContact({ name, email, message });
-        res.status(200).json({ msg: 'Mensaje recibido y será procesado' });
+        res.status(200).json({ msg: 'El mensaje  se ha enviado correctamente' });
 
         // Enviar el correo en segundo plano
         sendEmailNotification({ name, email, message })
-            .then(() => console.log('Correo enviado correctamente'))
-            .catch((err) => console.error('Error al enviar el correo:', err));
+            .then(() => {
+                console.log('Correo enviado correctamente')
+            })
+            .catch((error) => console.error('Error al enviar el correo:', error));
     } catch (error) {
-        console.error('Error al guardar el contacto:', error);
+        //console.error('Error al guardar el contacto:', error);
         res.status(500).json({ error: 'Error al procesar la solicitud' });
     }
 });

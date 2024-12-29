@@ -3,7 +3,9 @@ const dotenv = require('dotenv').config();
 
 //configuracion del nodemailer
 const transporter = nodemailer.createTransport({
-    service: 'gmail',//este sera el proveedor
+    host: 'smtp.ionos.es',//este sera el proveedor
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,//mi correo
         pass: process.env.EMAIL_PASS,// mi contraseña de aplicaciones
@@ -35,7 +37,7 @@ const sendEmailNotification = async (contact) => {
         throw new Error('No se pudo enviar el correo');
     }
 
-    //return transporter.sendMail(mailOptions);
+   // return transporter.sendMail(mailOptions);
 }
 
 module.exports = sendEmailNotification;
