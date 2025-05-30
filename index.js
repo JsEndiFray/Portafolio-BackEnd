@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv').config();
 
+const path = require('path');
+const fs = require('fs');
 
 const dbConnection = require('./src/dbConnection/dbConnection');
 const sendEmailNotification = require('./src/services/emailServices')
@@ -50,7 +52,7 @@ const port = process.env.PORT || 5001;
 // Middleware
 app.use(cors({
     origin: ['https://efmv.es', 'https://www.efmv.es', 'http://localhost:4200'],
-    methods: ['GET', 'POST','OPTIONS'],
+    methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['content-type', 'Authorization'],
     credentials: true
 }));
@@ -64,31 +66,24 @@ app.get("/", (req, res) => res.send("Express en Vercel"));
 
 //Ruta para enviar mensaje
 app.post('/api/contact', async (req, res) => {
-    const { name, email, message } = req.body;
+    const {name, email, message} = req.body;
     if (!name || !email || !message) {
-        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+        return res.status(400).json({error: 'Todos los campos son obligatorios'});
     }
     try {
-        await dbConnection.createContact({ name, email, message });
-        res.status(200).json({ msg: 'El mensaje  se ha enviado correctamente' });
+        await dbConnection.createContact({name, email, message});
+        res.status(200).json({msg: 'El mensaje  se ha enviado correctamente'});
 
         // Enviar el correo en segundo plano
-        sendEmailNotification({ name, email, message })
+        sendEmailNotification({name, email, message})
             .then(() => {
                 console.log('Correo enviado correctamente')
             })
             .catch((error) => console.error('Error al enviar el correo:', error));
     } catch (error) {
-        res.status(500).json({ error: 'Error al procesar la solicitud' });
+        res.status(500).json({error: 'Error al procesar la solicitud'});
     }
 });
-
-
-
-
-
-
-
 
 
 // Ruta para obtener mensajes
@@ -100,6 +95,78 @@ app.get('/api/contact', (req, res) => {
         console.error("Error al obtener los contactos:", error);
         res.status(500).json({error: 'Error al obtener los contactos'});
     })
+});
+
+// Endpoint para descargar CV
+app.get('/api/cv/download', (req, res) => {
+    try {
+        const cvPath = path.join(__dirname, 'src', 'assets', 'cv', 'cv-endifray.pdf');
+
+        if (!fs.existsSync(cvPath)) {
+            return res.status(404).json({
+                success: false,
+                error: 'CV no encontrado'
+            });
+        }
+
+        res.setHeader('Content-Disposition', 'attachment; filename="CV-EndiFray.pdf"');
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Cache-Control', 'no-cache');
+
+        res.sendFile(cvPath, (err) => {
+            if (err) {
+                console.error('Error al enviar CV:', err);
+                if (!res.headersSent) {
+                    res.status(500).json({
+                        success: false,
+                        error: 'Error al descargar CV'
+                    });
+                }
+            } else {
+                console.log('✅ CV descargado correctamente:', new Date().toISOString());
+            }
+        });
+
+    } catch (error) {
+        console.error('Error en endpoint de CV:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+app.get('/api/cv/status', (req, res) => {
+    try {
+        const cvPath = path.join(__dirname, 'src', 'assets', 'cv', 'cv-endifray.pdf');
+        const exists = fs.existsSync(cvPath);
+
+        if (exists) {
+            const stats = fs.statSync(cvPath);
+            res.json({
+                success: true,
+                exists: true,
+                data: {
+                    size: stats.size,
+                    lastModified: stats.mtime,
+                    sizeFormatted: `${(stats.size / 1024 / 1024).toFixed(2)} MB`
+                }
+            });
+        } else {
+            res.json({
+                success: true,
+                exists: false,
+                message: 'CV no encontrado'
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Error al verificar CV:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al verificar estado del CV'
+        });
+    }
 });
 
 
