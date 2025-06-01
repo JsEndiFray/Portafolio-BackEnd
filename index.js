@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 
 const dbConnection = require('./src/dbConnection/dbConnection');
-const sendEmailNotification = require('./src/services/emailServices')
+const sendEmailNotification = require('./src/services/emailServices.js')
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -66,35 +66,53 @@ app.get("/", (req, res) => res.send("Express en Vercel"));
 
 //Ruta para enviar mensaje
 app.post('/api/contact', async (req, res) => {
-    const {name, email, message} = req.body;
-    if (!name || !email || !message) {
-        return res.status(400).json({error: 'Todos los campos son obligatorios'});
-    }
     try {
-        await dbConnection.createContact({name, email, message});
-        res.status(200).json({msg: 'El mensaje  se ha enviado correctamente'});
+        const {name, email, message, phone} = req.body;
 
-        // Enviar el correo en segundo plano
-        sendEmailNotification({name, email, message})
-            .then(() => {
-                console.log('Correo enviado correctamente')
-            })
-            .catch((error) => console.error('Error al enviar el correo:', error));
+        if (!name || !email || !message) {
+            return res.status(400).json({
+                success: false,
+                message: 'Los campos nombre, email y mensaje son obligatorios'
+            });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'El formato del email no es válido'
+            });
+        }
+
+        // Guardar en BD
+        await dbConnection.createContact({
+            name: name.trim(),
+            email: email.trim(),
+            message: message.trim(),
+            phone: phone?.trim() || ''
+        });
+
+        // Enviar email
+        const emailResult = await sendEmailNotification(
+            name.trim(),
+            email.trim(),
+            message.trim(),
+            phone?.trim() || ''
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Mensaje enviado correctamente',
+            messageId: emailResult.messageId
+        });
+
     } catch (error) {
-        res.status(500).json({error: 'Error al procesar la solicitud'});
+        console.error('Error:', error.message);
+        res.status(500).json(
+            false,
+            'Error interno del servidor'
+        );
     }
-});
-
-
-// Ruta para obtener mensajes
-app.get('/api/contact', (req, res) => {
-    dbConnection.getContact()
-        .then(contact => {
-            res.status(200).json(contact);
-        }).catch(error => {
-        console.error("Error al obtener los contactos:", error);
-        res.status(500).json({error: 'Error al obtener los contactos'});
-    })
 });
 
 // Endpoint para descargar CV
@@ -123,7 +141,7 @@ app.get('/api/cv/download', (req, res) => {
                     });
                 }
             } else {
-                console.log('✅ CV descargado correctamente:', new Date().toISOString());
+                console.log('CV descargado correctamente:', new Date().toISOString());
             }
         });
 
@@ -136,6 +154,8 @@ app.get('/api/cv/download', (req, res) => {
     }
 });
 
+
+// Endpoint para estado del CV
 app.get('/api/cv/status', (req, res) => {
     try {
         const cvPath = path.join(__dirname, 'src', 'assets', 'cv', 'cv-endifray.pdf');
@@ -161,7 +181,6 @@ app.get('/api/cv/status', (req, res) => {
         }
 
     } catch (error) {
-        console.error('❌ Error al verificar CV:', error);
         res.status(500).json({
             success: false,
             error: 'Error al verificar estado del CV'
