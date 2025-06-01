@@ -228,10 +228,12 @@ app.listen(port, () => {
     console.log('Servidor conectado en el puerto:', port);
 });
 */
+
+
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv').config();
-
 const path = require('path');
 const fs = require('fs');
 
@@ -241,16 +243,15 @@ const sendEmailNotification = require('./src/services/emailServices.js')
 const app = express();
 const port = process.env.PORT || 5001;
 
-// Middleware CORS mejorado
+// Middleware CORS
 app.use(cors({
     origin: [
         'https://efmv.es',
         'https://www.efmv.es',
-        'https://api.efmv.es',           // ✅ Agregado
-        'https://endi-fray.vercel.app',  // ✅ Tu dominio de Vercel
-        'https://*.vercel.app',          // ✅ Cualquier subdominio de Vercel
-        'http://localhost:4200',
-        'http://localhost:3000'
+        'https://api.efmv.es',
+        'https://endi-fray.vercel.app',
+        'https://*.vercel.app',
+        ...(process.env.NODE_ENV === 'development' ? ['http://localhost:4200', 'http://localhost:3000'] : [])
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
@@ -261,17 +262,16 @@ app.use(cors({
         'Origin'
     ],
     credentials: true,
-    optionsSuccessStatus: 200 // ✅ Para compatibilidad con navegadores antiguos
+    optionsSuccessStatus: 200
 }));
 
-// ✅ Middleware adicional para headers
+// Headers adicionales
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', req.headers.origin);
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
 
-    // Responder a preflight requests
     if (req.method === 'OPTIONS') {
         return res.sendStatus(200);
     }
@@ -281,10 +281,17 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-//Ruta conexión con vercel.
+// Logging solo en desarrollo
+if (process.env.NODE_ENV === 'development') {
+    app.use((req, res, next) => {
+        console.log(`${req.method} ${req.path}`, req.body);
+        next();
+    });
+}
+
+// Rutas principales
 app.get("/", (req, res) => res.send("Express en Vercel"));
 
-// ✅ Endpoint de health check
 app.get("/api/health", (req, res) => {
     res.json({
         success: true,
@@ -294,11 +301,9 @@ app.get("/api/health", (req, res) => {
     });
 });
 
-//Ruta para enviar mensaje - ✅ CORREGIDA
+// Endpoint de contacto
 app.post('/api/contact', async (req, res) => {
     try {
-        console.log('📨 Contacto recibido:', req.body); // Debug
-
         const {name, email, message, phone} = req.body;
 
         // Validaciones
@@ -325,10 +330,10 @@ app.post('/api/contact', async (req, res) => {
                 message: message.trim(),
                 phone: phone?.trim() || ''
             });
-            console.log('Contacto guardado en BD');
         } catch (dbError) {
-            console.error('Error BD:', dbError);
-            // Continuar aunque falle la BD
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error BD:', dbError);
+            }
         }
 
         // Enviar email
@@ -339,7 +344,6 @@ app.post('/api/contact', async (req, res) => {
                 message.trim(),
                 phone?.trim() || ''
             );
-            console.log('Email enviado:', emailResult.messageId);
 
             res.status(200).json({
                 success: true,
@@ -347,20 +351,21 @@ app.post('/api/contact', async (req, res) => {
                 messageId: emailResult.messageId
             });
         } catch (emailError) {
-            console.error('Error email:', emailError);
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error email:', emailError);
+            }
 
-            // ✅ Respuesta exitosa aunque falle el email
             res.status(200).json({
                 success: true,
-                message: 'Mensaje recibido correctamente. Te contactaremos pronto.',
-                note: 'Email en proceso'
+                message: 'Mensaje recibido correctamente. Te contactaremos pronto.'
             });
         }
 
     } catch (error) {
-        console.error('Error general:', error.message);
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Error general:', error.message);
+        }
 
-        // ✅ RESPUESTA CORREGIDA
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor. Intenta nuevamente.'
@@ -385,21 +390,15 @@ app.get('/api/cv/download', (req, res) => {
         res.setHeader('Cache-Control', 'no-cache');
 
         res.sendFile(cvPath, (err) => {
-            if (err) {
-                console.error('Error al enviar CV:', err);
-                if (!res.headersSent) {
-                    res.status(500).json({
-                        success: false,
-                        error: 'Error al descargar CV'
-                    });
-                }
-            } else {
-                console.log('CV descargado correctamente:', new Date().toISOString());
+            if (err && !res.headersSent) {
+                res.status(500).json({
+                    success: false,
+                    error: 'Error al descargar CV'
+                });
             }
         });
 
     } catch (error) {
-        console.error('Error en endpoint de CV:', error);
         res.status(500).json({
             success: false,
             error: 'Error interno del servidor'
@@ -440,16 +439,18 @@ app.get('/api/cv/status', (req, res) => {
     }
 });
 
-// ✅ Middleware de manejo de errores global
+// Middleware de manejo de errores
 app.use((error, req, res, next) => {
-    console.error('Error no manejado:', error);
+    if (process.env.NODE_ENV === 'development') {
+        console.error('Error no manejado:', error);
+    }
     res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
     });
 });
 
-// ✅ Ruta 404
+// Ruta 404
 app.use('*', (req, res) => {
     res.status(404).json({
         success: false,
@@ -458,11 +459,8 @@ app.use('*', (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log('🚀 Servidor conectado en el puerto:', port);
-    console.log('🌍 CORS configurado para:', [
-        'https://efmv.es',
-        'https://www.efmv.es',
-        'https://api.efmv.es',
-        'https://endi-fray.vercel.app'
-    ]);
+    if (process.env.NODE_ENV === 'development') {
+        console.log('🚀 Servidor conectado en el puerto:', port);
+        console.log('🌍 CORS configurado para producción');
+    }
 });
